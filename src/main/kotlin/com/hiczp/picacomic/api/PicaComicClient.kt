@@ -1,8 +1,10 @@
 package com.hiczp.picacomic.api
 
 import com.hiczp.caeruleum.create
+import com.hiczp.picacomic.api.feature.forceOverrideHeaders
 import com.hiczp.picacomic.api.service.main.MainService
-import com.hiczp.picacomic.api.utils.HmacSHA256
+import com.hiczp.picacomic.api.utils.convertToString
+import com.hiczp.picacomic.api.utils.hmacSHA256
 import com.hiczp.picacomic.api.utils.nextString
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -38,16 +40,19 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
         defaultRequest {
             val time = Instant.now().epochSecond
             val nonce = Random.nextString(('0'..'9') + ('a'..'f'), 32)
-            val signature = HmacSHA256(PicaComicInherent.apiKey)
-                .encryptToString("${url.encodedPath.drop(1)}$time$nonce${method.value}${PicaComicInherent.apiKey}".toLowerCase())
 
             with(PicaComicInherent) {
                 header("api-key", apiKey)
-                header("accept", accept)
                 header("app-channel", appChannel)
                 header("time", time)
                 header("nonce", nonce)
-                header("signature", signature)
+                header(
+                    "signature",
+                    hmacSHA256(
+                        hmacSha256Key,
+                        "${url.encodedPath.drop(1)}$time$nonce${method.value}$apiKey".toLowerCase()
+                    ).convertToString()
+                )
                 header("app-version", appVersion)
                 header("app-uuid", appUUID)
                 header("image-quality", imageQuality)
@@ -59,6 +64,10 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
 
         install(JsonFeature) {
             serializer = GsonSerializer()
+        }
+
+        forceOverrideHeaders {
+            append("accept", PicaComicInherent.accept)
         }
 
         config()

@@ -52,6 +52,10 @@ dependencies {
     testApi group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion
 }
 
+test {
+    useJUnitPlatform()
+}
+
 def javaVersion = JavaVersion.VERSION_1_8
 def compilerArgs = ["-Xuse-experimental=kotlin.Experimental", "-XXLanguage:+InlineClasses"]
 
