@@ -2,7 +2,7 @@ package com.hiczp.picacomic.api.utils
 
 import kotlin.random.Random
 
-fun Random.nextString(charTable: List<Char>, length: Int) =
+internal fun Random.nextString(charTable: List<Char>, length: Int) =
     generateSequence {
         nextInt(charTable.size)
     }.take(length).map {

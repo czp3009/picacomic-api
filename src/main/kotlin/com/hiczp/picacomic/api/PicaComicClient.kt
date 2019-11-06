@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 import kotlin.random.Random
 
-private const val picaAPIBaseUrl = "https://picaapi.picacomic.com/"
+private const val picaAPI = "https://picaapi.picacomic.com"
 
 class PicaComicClient<out T : HttpClientEngineConfig>(
     engine: HttpClientEngineFactory<T>,
@@ -73,7 +73,7 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
         config()
     }
 
-    val main by lazy { httpClient.create<MainService>(picaAPIBaseUrl) }
+    val main by lazy { httpClient.create<MainService>("$picaAPI/") }
 
     override fun close() {
         httpClient.close()

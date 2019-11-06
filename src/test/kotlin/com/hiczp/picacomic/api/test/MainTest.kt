@@ -1,9 +1,10 @@
 package com.hiczp.picacomic.api.test
 
 import com.hiczp.picacomic.api.PicaComicClient
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.apache.Apache
 import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.runBlocking
+import org.apache.http.HttpHost
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -16,7 +17,14 @@ class MainTest {
     @UseExperimental(KtorExperimentalAPI::class)
     @BeforeAll
     fun init() {
-        picaComicClient = PicaComicClient(CIO)
+        picaComicClient = PicaComicClient(Apache) {
+            engine {
+                //set proxy
+                customizeClient {
+                    setProxy(HttpHost("192.168.31.157", 10809))
+                }
+            }
+        }
     }
 
     @Test
