@@ -1,6 +1,7 @@
 package com.hiczp.picacomic.api.service.main.model
 
-data class InitResponse(
+@Suppress("SpellCheckingInspection")
+data class WakaInitResponse(
     val status: String, // ok
     val addresses: List<String>,
     val waka: String, // https://ad-channel.woyeahgo.tk

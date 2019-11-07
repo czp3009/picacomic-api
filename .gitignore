@@ -1,6 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Example user template template
 ### Example user template
+/src/test/resources/config.json
 
 # IntelliJ project files
 .idea
