@@ -1,6 +1,6 @@
 package com.hiczp.picacomic.api.service.auth.model
 
-import com.google.gson.annotations.SerializedName
+import com.hiczp.picacomic.api.service.user.model.Gender
 
 data class RegisterRequest(
     //昵称
@@ -21,13 +21,4 @@ data class RegisterRequest(
     val birthday: String,
     //性别
     val gender: Gender
-) {
-    enum class Gender {
-        @SerializedName("m")
-        MALE,
-        @SerializedName("f")
-        FEMALE,
-        @SerializedName("bot")
-        BOT
-    }
-}
+)

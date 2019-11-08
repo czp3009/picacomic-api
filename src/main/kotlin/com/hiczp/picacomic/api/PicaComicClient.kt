@@ -4,7 +4,13 @@ import com.hiczp.caeruleum.create
 import com.hiczp.picacomic.api.feature.doBeforeSend
 import com.hiczp.picacomic.api.service.auth.AuthService
 import com.hiczp.picacomic.api.service.auth.model.SignInRequest
+import com.hiczp.picacomic.api.service.comic.ComicService
+import com.hiczp.picacomic.api.service.comment.CommentService
+import com.hiczp.picacomic.api.service.episode.EpisodeService
+import com.hiczp.picacomic.api.service.game.GameService
 import com.hiczp.picacomic.api.service.main.MainService
+import com.hiczp.picacomic.api.service.user.UserService
+import com.hiczp.picacomic.api.service.util.UtilService
 import com.hiczp.picacomic.api.utils.convertToString
 import com.hiczp.picacomic.api.utils.hmacSHA256
 import com.hiczp.picacomic.api.utils.nextString
@@ -20,6 +26,7 @@ import io.ktor.client.features.logging.LogLevel
 import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.userAgent
 import kotlinx.io.core.Closeable
 import org.slf4j.LoggerFactory
@@ -70,8 +77,9 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
                 userAgent(userAgent)
             }
 
-            if (token == null || attributes.containsByKey(noAuthAttribute)) return@defaultRequest
-            header("authorization", token)
+            val currentToken = token
+            if (currentToken == null || attributes.containsByKey(noAuthAttribute)) return@defaultRequest
+            header("authorization", currentToken)
         }
 
         install(JsonFeature) {
@@ -88,10 +96,16 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
 
     val main by lazy { httpClient.create<MainService>() }
     val auth by lazy { httpClient.create<AuthService>("$picaAPI/auth/") }
+    val comic by lazy { httpClient.create<ComicService>("$picaAPI/comics/") }
+    val comment by lazy { httpClient.create<CommentService>("$picaAPI/comments/") }
+    val episode by lazy { httpClient.create<EpisodeService>("$picaAPI/eps/") }
+    val game by lazy { httpClient.create<GameService>("$picaAPI/games/") }
+    val user by lazy { httpClient.create<UserService>("$picaAPI/users/") }
+    val util by lazy { httpClient.create<UtilService>("$picaAPI/utils/") }
 
     suspend fun signIn(email: String, password: String) =
         auth.signIn(SignInRequest(email, password)).also {
-            if (it.code == 200) token = it.data.token
+            if (it.code == HttpStatusCode.OK.value) token = it.data.token
         }
 
     override fun close() {

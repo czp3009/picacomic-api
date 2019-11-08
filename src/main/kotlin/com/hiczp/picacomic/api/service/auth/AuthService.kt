@@ -6,9 +6,7 @@ import com.hiczp.caeruleum.annotation.DefaultContentType
 import com.hiczp.caeruleum.annotation.Post
 import com.hiczp.picacomic.api.NO_AUTH
 import com.hiczp.picacomic.api.service.CommonResponse
-import com.hiczp.picacomic.api.service.auth.model.RegisterRequest
-import com.hiczp.picacomic.api.service.auth.model.SignInRequest
-import com.hiczp.picacomic.api.service.auth.model.SignInResponse
+import com.hiczp.picacomic.api.service.auth.model.*
 import com.hiczp.picacomic.api.utils.JSON_UTF8
 
 @DefaultContentType(JSON_UTF8)
@@ -20,4 +18,18 @@ interface AuthService {
     @Attribute(NO_AUTH)
     @Post("sign-in")
     suspend fun signIn(@Body signInRequest: SignInRequest): CommonResponse<SignInResponse>
+
+    /**
+     * 获取密保问题
+     */
+    @Attribute(NO_AUTH)
+    @Post("forgot-password")
+    suspend fun forgotPassword(@Body forgotPasswordRequest: ForgotPasswordRequest): CommonResponse<ForgotPasswordResponse>
+
+    /**
+     * 回答密保问题之一并得到一个随机密码, 使用此随机密码登陆之后再另行修改密码
+     */
+    @Attribute(NO_AUTH)
+    @Post("reset-password")
+    suspend fun resetPassword(@Body resetPasswordRequest: ResetPasswordRequest): CommonResponse<ResetPasswordResponse>
 }

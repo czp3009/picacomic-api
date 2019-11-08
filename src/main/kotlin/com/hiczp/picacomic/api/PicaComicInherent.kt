@@ -6,14 +6,15 @@ package com.hiczp.picacomic.api
 @Suppress("SpellCheckingInspection")
 object PicaComicInherent {
     var apiKey = "C69BAF41DA5ABD1FFEDC6D2FEA56B"
-    const val accept = "application/vnd.picacomic.com.v1+json"
+    //must be this
+    var accept = "application/vnd.picacomic.com.v1+json"
     //分流
     var appChannel = 2
     var appVersion = "2.2.1.2.3.3"
     var appUUID = "defaultUuid"
     var imageQuality = "original"
-    const val appPlatform = "android"
+    var appPlatform = "android"
     var appBuildVersion = 44
     var userAgent = "okhttp/3.8.1"
-    var hmacSha256Key = "~d}\$Q7\$eIni=V)9\\\\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pddUBL5n|0/*Cn"
+    var hmacSha256Key = "~d}\$Q7\$eIni=V)9\\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pddUBL5n|0/*Cn"
 }

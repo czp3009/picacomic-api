@@ -1,7 +1,7 @@
 # Pica Comic API
-在 Kotlin 调用 `picacomic` API.
+Call `picacomic` API in Kotlin.
 
-# 使用
+# Usage
 咕咕咕咕咕
 
 # License

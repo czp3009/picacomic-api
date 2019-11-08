@@ -3,5 +3,6 @@
   "httpProxyHost": "localhost",
   "httpProxyPort": 8080,
   "email": "onlyForTest",
-  "password": "onlyForTest"
+  "password": "onlyForTest",
+  "token": null
 }
