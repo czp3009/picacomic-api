@@ -1,20 +1,20 @@
 package com.hiczp.picacomic.api
 
+import com.github.salomonbrys.kotson.*
 import com.hiczp.caeruleum.create
 import com.hiczp.picacomic.api.feature.doBeforeSend
+import com.hiczp.picacomic.api.service.Response
 import com.hiczp.picacomic.api.service.auth.AuthService
 import com.hiczp.picacomic.api.service.auth.model.SignInRequest
+import com.hiczp.picacomic.api.service.category.CategoryService
 import com.hiczp.picacomic.api.service.comic.ComicService
 import com.hiczp.picacomic.api.service.comment.CommentService
 import com.hiczp.picacomic.api.service.episode.EpisodeService
 import com.hiczp.picacomic.api.service.game.GameService
-import com.hiczp.picacomic.api.service.main.MainService
+import com.hiczp.picacomic.api.service.init.InitService
 import com.hiczp.picacomic.api.service.user.UserService
 import com.hiczp.picacomic.api.service.util.UtilService
-import com.hiczp.picacomic.api.utils.convertToString
-import com.hiczp.picacomic.api.utils.hmacSHA256
-import com.hiczp.picacomic.api.utils.nextString
-import com.hiczp.picacomic.api.utils.removeAndAdd
+import com.hiczp.picacomic.api.utils.*
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineConfig
@@ -26,7 +26,6 @@ import io.ktor.client.features.logging.LogLevel
 import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.userAgent
 import kotlinx.io.core.Closeable
 import org.slf4j.LoggerFactory
@@ -37,6 +36,7 @@ private const val picaAPI = "https://picaapi.picacomic.com"
 
 /**
  * 如果密钥不正确(未来的更新), 所有 API 将始终返回 success 且无 data 字段
+ * 如果没有内容, data 将直接为 null
  */
 class PicaComicClient<out T : HttpClientEngineConfig>(
     engine: HttpClientEngineFactory<T>,
@@ -83,7 +83,38 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
         }
 
         install(JsonFeature) {
-            serializer = GsonSerializer()
+            serializer = GsonSerializer {
+                registerTypeAdapter<Response<*>> {
+                    deserialize { (json, type, context) ->
+                        val rootJsonObject = json.obj
+                        val dataElement = rootJsonObject.get("data")
+                        val data = if (dataElement == null || !dataElement.isJsonObject) {
+                            null
+                        } else {
+                            val dataJsonObject = dataElement.obj
+                            val entrySet = dataJsonObject.entrySet()
+                            when {
+                                entrySet.isEmpty() -> null
+                                //use Any to make type system happy
+                                entrySet.size == 1 -> context.deserialize<Any>(
+                                    entrySet.first().value,
+                                    type.actualTypeArguments.first()
+                                )
+                                else -> context.deserialize(dataJsonObject, type.actualTypeArguments.first())
+                            }
+                        }
+                        with(json.obj) {
+                            Response(
+                                get("code").int,
+                                get("error").nullString,
+                                get("message").string,
+                                get("detail").nullString,
+                                data
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         doBeforeSend {
@@ -94,8 +125,9 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
         config()
     }
 
-    val main by lazy { httpClient.create<MainService>() }
+    val main by lazy { httpClient.create<InitService>() }
     val auth by lazy { httpClient.create<AuthService>("$picaAPI/auth/") }
+    val category by lazy { httpClient.create<CategoryService>("$picaAPI/categories/") }
     val comic by lazy { httpClient.create<ComicService>("$picaAPI/comics/") }
     val comment by lazy { httpClient.create<CommentService>("$picaAPI/comments/") }
     val episode by lazy { httpClient.create<EpisodeService>("$picaAPI/eps/") }
@@ -105,7 +137,7 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
 
     suspend fun signIn(email: String, password: String) =
         auth.signIn(SignInRequest(email, password)).also {
-            if (it.code == HttpStatusCode.OK.value) token = it.data.token
+            if (it.ok()) token = it.data
         }
 
     override fun close() {

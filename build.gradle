@@ -11,6 +11,7 @@ description 'Call PicaComic API in Kotlin'
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 //kotlin
@@ -21,7 +22,7 @@ dependencies {
 //http
 dependencies {
     // https://mvnrepository.com/artifact/com.hiczp/caeruleum
-    api group: 'com.hiczp', name: 'caeruleum', version: '1.2.6'
+    api group: 'com.hiczp', name: 'caeruleum', version: '1.2.7'
     // https://mvnrepository.com/artifact/io.ktor/ktor-client-logging-jvm
     api group: 'io.ktor', name: 'ktor-client-logging-jvm', version: ktorVersion
     // https://mvnrepository.com/artifact/io.ktor/ktor-client-gson

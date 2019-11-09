@@ -15,6 +15,8 @@ import org.apache.http.HttpHost
 import org.junit.jupiter.api.*
 import java.io.FileNotFoundException
 
+private fun Any.println() = println(this)
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MainTest {
     private lateinit var config: JsonObject
@@ -42,9 +44,9 @@ class MainTest {
     }
 
     @Test
-    fun test() {
+    fun initTest() {
         runBlocking {
-            picaComicClient.main.init()
+            picaComicClient.main.init().println()
         }
     }
 
@@ -66,7 +68,7 @@ class MainTest {
                     "1995-11-14",
                     Gender.BOT
                 )
-            )
+            ).println()
         }
     }
 
@@ -74,21 +76,65 @@ class MainTest {
     @Test
     fun signIn() {
         runBlocking {
-            picaComicClient.signIn(config["email"].string, config["password"].string)
+            picaComicClient.signIn(config["email"].string, config["password"].string).println()
+        }
+    }
+
+    @Test
+    fun getNotification() {
+        runBlocking {
+            picaComicClient.user.getNotification().println()
         }
     }
 
     @Test
     fun getProfile() {
         runBlocking {
-            picaComicClient.user.getProfile()
+            picaComicClient.user.getProfile().println()
+        }
+    }
+
+    @Test
+    fun getOthersProfile() {
+        runBlocking {
+            picaComicClient.user.getProfile("5bd0256ea5860d7c1aa49d4b").println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun dirty() {
+        runBlocking {
+            picaComicClient.user.dirty("5bd0256ea5860d7c1aa49d4b").println()
+        }
+    }
+
+    @Test
+    fun getMyComments() {
+        runBlocking {
+            picaComicClient.user.getMyComments().println()
         }
     }
 
     @Test
     fun getFavorite() {
         runBlocking {
-            picaComicClient.user.getFavourite()
+            picaComicClient.user.getFavourite().println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun punchIn() {
+        runBlocking {
+            picaComicClient.user.punchIn().println()
+        }
+    }
+
+    @Test
+    fun category() {
+        runBlocking {
+            picaComicClient.category.get().println()
         }
     }
 

@@ -1,4 +1,4 @@
-package com.hiczp.picacomic.api.service.main.model
+package com.hiczp.picacomic.api.service.init.model
 
 @Suppress("SpellCheckingInspection")
 data class WakaInitResponse(
