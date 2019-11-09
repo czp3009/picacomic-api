@@ -7,10 +7,13 @@ import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.hiczp.picacomic.api.PicaComicClient
+import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.auth.model.RegisterRequest
 import com.hiczp.picacomic.api.service.user.model.Gender
 import io.ktor.client.engine.apache.Apache
+import kotlinx.coroutines.io.readRemaining
 import kotlinx.coroutines.runBlocking
+import kotlinx.io.core.readBytes
 import org.apache.http.HttpHost
 import org.junit.jupiter.api.*
 import java.io.FileNotFoundException
@@ -135,6 +138,15 @@ class MainTest {
     fun category() {
         runBlocking {
             picaComicClient.category.get().println()
+        }
+    }
+
+    @Test
+    fun downloadFile() {
+        runBlocking {
+            picaComicClient.downloadFile(
+                Thumbnail("https://storage1.picacomic.com", "艦隊收藏.jpg", "1ed52b9e-8ac3-47ae-bafc-c31bfab9b3d5.jpg")
+            ).readRemaining().readBytes().contentToString().println()
         }
     }
 

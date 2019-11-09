@@ -26,7 +26,7 @@ data class Thumbnail(
     val originalName: String,
     val path: String
 ) {
-    val urlString get() = "$fileServer/$path"
+    val urlString get() = "$fileServer/static/$path"
 }
 
 data class IdAndTitle(

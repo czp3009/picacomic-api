@@ -3,7 +3,9 @@ package com.hiczp.picacomic.api
 import com.github.salomonbrys.kotson.*
 import com.hiczp.caeruleum.create
 import com.hiczp.picacomic.api.feature.doBeforeSend
+import com.hiczp.picacomic.api.feature.logging
 import com.hiczp.picacomic.api.service.Response
+import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.auth.AuthService
 import com.hiczp.picacomic.api.service.auth.model.SignInRequest
 import com.hiczp.picacomic.api.service.category.CategoryService
@@ -23,12 +25,12 @@ import io.ktor.client.features.defaultRequest
 import io.ktor.client.features.json.GsonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.logging.LogLevel
-import io.ktor.client.features.logging.Logging
+import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.http.userAgent
+import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.io.core.Closeable
-import org.slf4j.LoggerFactory
 import java.time.Instant
 import kotlin.random.Random
 
@@ -38,6 +40,7 @@ private const val picaAPI = "https://picaapi.picacomic.com"
  * 如果密钥不正确(未来的更新), 所有 API 将始终返回 success 且无 data 字段
  * 如果没有内容, data 将直接为 null
  */
+@Suppress("MemberVisibilityCanBePrivate")
 class PicaComicClient<out T : HttpClientEngineConfig>(
     engine: HttpClientEngineFactory<T>,
     config: HttpClientConfig<T>.() -> Unit = {}
@@ -45,14 +48,7 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
     var token: String? = null
 
     private val httpClient = HttpClient(engine) {
-        install(Logging) {
-            level = if (LoggerFactory.getLogger(PicaComicClient::class.java).isDebugEnabled) {
-                LogLevel.ALL
-            } else {
-                LogLevel.NONE
-            }
-        }
-
+        logging {}
         defaultRequest {
             if (attributes.containsByKey(noSignAttribute)) return@defaultRequest
             val time = Instant.now().epochSecond
@@ -81,7 +77,6 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
             if (currentToken == null || attributes.containsByKey(noAuthAttribute)) return@defaultRequest
             header("authorization", currentToken)
         }
-
         install(JsonFeature) {
             serializer = GsonSerializer {
                 registerTypeAdapter<Response<*>> {
@@ -116,18 +111,16 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
                 }
             }
         }
-
         doBeforeSend {
             headers.removeAndAdd("accept", PicaComicInherent.accept)
             headers.remove(HttpHeaders.AcceptCharset)
         }
-
         config()
     }
 
     val main by lazy { httpClient.create<InitService>() }
     val auth by lazy { httpClient.create<AuthService>("$picaAPI/auth/") }
-    val category by lazy { httpClient.create<CategoryService>("$picaAPI/categories/") }
+    val category by lazy { httpClient.create<CategoryService>("$picaAPI/categories") }
     val comic by lazy { httpClient.create<ComicService>("$picaAPI/comics/") }
     val comment by lazy { httpClient.create<CommentService>("$picaAPI/comments/") }
     val episode by lazy { httpClient.create<EpisodeService>("$picaAPI/eps/") }
@@ -140,7 +133,17 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
             if (it.ok()) token = it.data
         }
 
+    private val downloader = HttpClient(engine) {
+        logging(LogLevel.HEADERS) {}
+        config()
+    }
+
+    suspend fun downloadFile(urlString: String) = downloader.get<ByteReadChannel>(urlString)
+
+    suspend fun downloadFile(thumbnail: Thumbnail) = downloadFile(thumbnail.urlString)
+
     override fun close() {
         httpClient.close()
+        downloader.close()
     }
 }
