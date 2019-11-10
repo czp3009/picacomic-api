@@ -2,6 +2,9 @@ package com.hiczp.picacomic.api.service
 
 import com.google.gson.annotations.SerializedName
 import com.hiczp.caeruleum.annotation.EncodeName
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 data class Page<T>(
     val limit: Int,
@@ -19,6 +22,21 @@ data class Page<T>(
     val previousPage get() = if (isFirst) 1 else page - 1
 
     val nextPage get() = if (isLast) pages else page + 1
+
+    companion object {
+        suspend fun <T> travelAll(pageProvider: suspend (page: Int) -> Page<T>): List<T> {
+            val firstPage = pageProvider(1)
+            return if (firstPage.isLast) {
+                firstPage.docs
+            } else {
+                coroutineScope {
+                    (2..firstPage.pages).map {
+                        async { pageProvider(it).docs }
+                    }
+                }.awaitAll().asSequence().mapTo(mutableListOf(firstPage.docs)) { it }.flatten()
+            }
+        }
+    }
 }
 
 data class Thumbnail(

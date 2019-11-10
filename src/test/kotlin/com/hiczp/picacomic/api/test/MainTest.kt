@@ -12,12 +12,15 @@ import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.auth.model.RegisterRequest
 import com.hiczp.picacomic.api.service.user.model.Gender
 import io.ktor.client.engine.apache.Apache
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.io.jvm.javaio.copyTo
 import kotlinx.coroutines.io.readRemaining
-import kotlinx.coroutines.runBlocking
 import kotlinx.io.core.readBytes
 import org.apache.http.HttpHost
 import org.junit.jupiter.api.*
 import java.io.FileNotFoundException
+import java.nio.file.Path
 
 private fun Any.println() = println(this)
 
@@ -142,6 +145,7 @@ class MainTest {
         }
     }
 
+    @Disabled
     @Test
     fun downloadFile() {
         runBlocking {
@@ -152,16 +156,16 @@ class MainTest {
     }
 
     @Test
-    fun getComics() {
+    fun search() {
         runBlocking {
-            picaComicClient.comic.get(category = PredefinedCategory.全彩.name).println()
+            picaComicClient.comic.search(category = PredefinedCategory.全彩.name).println()
         }
     }
 
     @Test
     fun advancedSearch() {
         runBlocking {
-            picaComicClient.comic.advancedSearch("交尾").println()
+            picaComicClient.comic.advancedSearch("罪与罚").println()
         }
     }
 
@@ -169,6 +173,132 @@ class MainTest {
     fun getKeywords() {
         runBlocking {
             picaComicClient.keyword.get().println()
+        }
+    }
+
+    @Test
+    fun getComicDetail() {
+        runBlocking {
+            picaComicClient.comic.getDetail("5822a6e3ad7ede654696e482").println()
+        }
+    }
+
+    @Test
+    fun getEpisode() {
+        runBlocking {
+            picaComicClient.comic.getEpisodes("5822a6e3ad7ede654696e482").println()
+        }
+    }
+
+    @Test
+    fun getAllEpisode() {
+        runBlocking {
+            picaComicClient.comic.getAllEpisodes("5d8a243a0d42090218c4af2b")
+                .sortedBy { it.order }
+                .println()
+        }
+    }
+
+    @Test
+    fun getComments() {
+        runBlocking {
+            picaComicClient.comic.getComments("5a99fc21ea8c1023dd61d1b0").println()
+        }
+    }
+
+    @Test
+    fun getComicPages() {
+        runBlocking {
+            picaComicClient.comic.getPages("5a99fc21ea8c1023dd61d1b0", 1).println()
+        }
+    }
+
+    @Test
+    fun getAllComicPages() {
+        runBlocking {
+            picaComicClient.comic.getAllPages("5da89d903510b43fb6c548d4", 1)
+                .joinToString(separator = "\n") { it.media.urlString }
+                .println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun getAllComments() {
+        runBlocking {
+            picaComicClient.comic.getAllComments("5da89d903510b43fb6c548d4").println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun like() {
+        runBlocking {
+            picaComicClient.comic.like("5da89d903510b43fb6c548d4").println()
+        }
+    }
+
+    //this test will take long time
+    @Disabled
+    @UseExperimental(ExperimentalCoroutinesApi::class)
+    @Test
+    fun downloadTest() {
+        runBlocking {
+            val requestPerSecond = 20L
+            val rateLimiter = produce {
+                while (true) {
+                    send(Unit)
+                    delay(1_000 / requestPerSecond)
+                }
+            }
+
+            suspend fun <T> (suspend () -> T).withRetry(): T {
+                var result: Result<T>
+                while (true) {
+                    rateLimiter.receive()
+                    result = runCatching { this() }
+                    if (result.isSuccess) break
+                }
+                return result.getOrNull()!!
+            }
+
+            //big comic
+            val comicId = "5da89d903510b43fb6c548d4"
+            //small comic
+            //val comicId = "5c0bca4e5a84c7393ef6030e"
+
+            val titleDeferred = async { picaComicClient.comic.getDetail(comicId).data.title }
+            val episodesDeferred = async { picaComicClient.comic.getAllEpisodes(comicId) }
+            val comicPath = Path.of("./download", titleDeferred.await()).also { path ->
+                val file = path.toFile()
+                if (file.exists()) {
+                    file.delete()
+                }
+                file.mkdirs()
+            }
+            val log = StringBuffer()
+            episodesDeferred.await().map { episode ->
+                val order = episode.order!!
+                val episodePath = comicPath.resolve(order.toString()).also { it.toFile().mkdir() }
+                async {
+                    suspend { picaComicClient.comic.getAllPages(comicId, order) }
+                        .withRetry()
+                        .map { it.media }
+                        .map {
+                            async {
+                                val imageFile = episodePath.resolve(it.originalName).toFile()
+                                println("Start download ${it.originalName} in Episode $episode")
+                                suspend { picaComicClient.downloadFile(it).copyTo(imageFile.outputStream()) }
+                                    .withRetry()
+                                println("${it.originalName} in Episode $episode downloaded")
+                            }
+                        }.also {
+                            log.appendln("Episode $episode finished")
+                        }
+                }
+            }.awaitAll().forEach { it.awaitAll() }
+            println(log)
+            rateLimiter.cancel()
         }
     }
 

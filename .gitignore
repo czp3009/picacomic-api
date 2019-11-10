@@ -2,6 +2,7 @@
 ### Example user template template
 ### Example user template
 /src/test/resources/config.json
+/download
 
 # IntelliJ project files
 .idea
