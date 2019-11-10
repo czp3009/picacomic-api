@@ -26,7 +26,14 @@ data class Thumbnail(
     val originalName: String,
     val path: String
 ) {
-    val urlString get() = "$fileServer/static/$path"
+    val urlString
+        get() = if (fileServer.endsWith('/')) {
+            //"https://pica-web.wakamoment.tk/static/"
+            "$fileServer$path"
+        } else {
+            //"https://storage1.picacomic.com"
+            "$fileServer/static/$path"
+        }
 }
 
 data class IdAndTitle(
@@ -70,4 +77,44 @@ enum class RedirectType {
     @EncodeName("web")
     @SerializedName("web")
     WEB
+}
+
+//常用分类
+@Suppress("NonAsciiCharacters")
+enum class PredefinedCategory {
+    嗶咔漢化,
+    全彩,
+    長篇,
+    同人,
+    短篇,
+    圓神領域,
+    碧藍幻想,
+    CG雜圖,
+    `英語 ENG`,
+    生肉,
+    純愛,
+    百合花園,
+    耽美花園,
+    偽娘哲學,
+    後宮閃光,
+    扶他樂園,
+    姐姐系,
+    妹妹系,
+    SM,
+    性轉換,
+    足の恋,
+    重口地帶,
+    人妻,
+    NTR,
+    強暴,
+    非人類,
+    艦隊收藏,
+    `Love Live`,
+    `SAO 刀劍神域`,
+    Fate,
+    東方,
+    WEBTOON,
+    禁書目錄,
+    歐美,
+    Cosplay
 }

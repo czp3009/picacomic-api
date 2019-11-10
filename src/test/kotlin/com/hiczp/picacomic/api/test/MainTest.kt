@@ -7,6 +7,7 @@ import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.hiczp.picacomic.api.PicaComicClient
+import com.hiczp.picacomic.api.service.PredefinedCategory
 import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.auth.model.RegisterRequest
 import com.hiczp.picacomic.api.service.user.model.Gender
@@ -49,7 +50,7 @@ class MainTest {
     @Test
     fun initTest() {
         runBlocking {
-            picaComicClient.main.init().println()
+            picaComicClient.init.init().println()
         }
     }
 
@@ -147,6 +148,27 @@ class MainTest {
             picaComicClient.downloadFile(
                 Thumbnail("https://storage1.picacomic.com", "艦隊收藏.jpg", "1ed52b9e-8ac3-47ae-bafc-c31bfab9b3d5.jpg")
             ).readRemaining().readBytes().contentToString().println()
+        }
+    }
+
+    @Test
+    fun getComics() {
+        runBlocking {
+            picaComicClient.comic.get(category = PredefinedCategory.全彩.name).println()
+        }
+    }
+
+    @Test
+    fun advancedSearch() {
+        runBlocking {
+            picaComicClient.comic.advancedSearch("交尾").println()
+        }
+    }
+
+    @Test
+    fun getKeywords() {
+        runBlocking {
+            picaComicClient.keyword.get().println()
         }
     }
 

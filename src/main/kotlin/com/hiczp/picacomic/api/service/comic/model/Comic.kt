@@ -11,8 +11,11 @@ data class Comic(
     val pagesCount: Int,
     @field:SerializedName("epsCount")
     val episodeCount: Int,
-    val categories: List<String>,
     val finished: Boolean,
+    val categories: List<String>,
     val thumb: Thumbnail,
-    val likesCount: Int
+    val id: String?,
+    val likesCount: Int,
+    val totalViews: Int?,
+    val totalLikes: Int?
 )

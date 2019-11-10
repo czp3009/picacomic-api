@@ -11,6 +11,8 @@ data class Response<T>(
 ) {
     fun ok() = code == HttpStatusCode.OK.value
 
+    fun unauthorized() = code == HttpStatusCode.Unauthorized.value
+
     val hasError get() = error != null
 
     val hasDetail get() = detail != null

@@ -19,6 +19,8 @@ interface AuthService {
     @Post("sign-in")
     suspend fun signIn(@Body signInRequest: SignInRequest): Response<String>
 
+    suspend fun signIn(email: String, password: String) = signIn(SignInRequest(email, password))
+
     /**
      * 获取密保问题
      */
@@ -26,10 +28,15 @@ interface AuthService {
     @Post("forgot-password")
     suspend fun forgotPassword(@Body forgotPasswordRequest: ForgotPasswordRequest): Response<ForgotPasswordResponse>
 
+    suspend fun forgotPassword(email: String) = forgotPassword(ForgotPasswordRequest(email))
+
     /**
      * 回答密保问题之一并得到一个随机密码, 使用此随机密码登陆之后再另行修改密码
      */
     @Attribute(NO_AUTH)
     @Post("reset-password")
     suspend fun resetPassword(@Body resetPasswordRequest: ResetPasswordRequest): Response<String>
+
+    suspend fun resetPassword(email: String, questionNo: Int, answer: String) =
+        resetPassword(ResetPasswordRequest(email, questionNo, answer))
 }

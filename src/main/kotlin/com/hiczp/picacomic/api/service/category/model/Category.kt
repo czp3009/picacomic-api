@@ -11,5 +11,6 @@ data class Category(
     val description: String?,
     val isWeb: Boolean,
     val link: String?,
+    //active 在当前版本客户端中不存在
     val active: Boolean?
 )

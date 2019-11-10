@@ -7,13 +7,13 @@ import com.hiczp.picacomic.api.feature.logging
 import com.hiczp.picacomic.api.service.Response
 import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.auth.AuthService
-import com.hiczp.picacomic.api.service.auth.model.SignInRequest
 import com.hiczp.picacomic.api.service.category.CategoryService
 import com.hiczp.picacomic.api.service.comic.ComicService
 import com.hiczp.picacomic.api.service.comment.CommentService
 import com.hiczp.picacomic.api.service.episode.EpisodeService
 import com.hiczp.picacomic.api.service.game.GameService
 import com.hiczp.picacomic.api.service.init.InitService
+import com.hiczp.picacomic.api.service.keyword.KeywordService
 import com.hiczp.picacomic.api.service.user.UserService
 import com.hiczp.picacomic.api.service.util.UtilService
 import com.hiczp.picacomic.api.utils.*
@@ -38,7 +38,6 @@ private const val picaAPI = "https://picaapi.picacomic.com"
 
 /**
  * 如果密钥不正确(未来的更新), 所有 API 将始终返回 success 且无 data 字段
- * 如果没有内容, data 将直接为 null
  */
 @Suppress("MemberVisibilityCanBePrivate")
 class PicaComicClient<out T : HttpClientEngineConfig>(
@@ -62,7 +61,7 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
                     "signature",
                     hmacSHA256(
                         hmacSha256Key,
-                        "${url.encodedPath.drop(1)}$time$nonce${method.value}$apiKey".toLowerCase()
+                        "${url.buildString().substringAfter("$picaAPI/")}$time$nonce${method.value}$apiKey".toLowerCase()
                     ).convertToString()
                 )
                 header("app-version", appVersion)
@@ -118,20 +117,27 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
         config()
     }
 
-    val main by lazy { httpClient.create<InitService>() }
+    val init by lazy { httpClient.create<InitService>() }
     val auth by lazy { httpClient.create<AuthService>("$picaAPI/auth/") }
     val category by lazy { httpClient.create<CategoryService>("$picaAPI/categories") }
     val comic by lazy { httpClient.create<ComicService>("$picaAPI/comics/") }
     val comment by lazy { httpClient.create<CommentService>("$picaAPI/comments/") }
     val episode by lazy { httpClient.create<EpisodeService>("$picaAPI/eps/") }
     val game by lazy { httpClient.create<GameService>("$picaAPI/games/") }
+    val keyword by lazy { httpClient.create<KeywordService>("$picaAPI/keywords") }
     val user by lazy { httpClient.create<UserService>("$picaAPI/users/") }
     val util by lazy { httpClient.create<UtilService>("$picaAPI/utils/") }
 
     suspend fun signIn(email: String, password: String) =
-        auth.signIn(SignInRequest(email, password)).also {
+        auth.signIn(email, password).also {
             if (it.ok()) token = it.data
         }
+
+    suspend fun checkAuthorize() = if (token == null) {
+        false
+    } else {
+        !user.getProfile().unauthorized()
+    }
 
     private val downloader = HttpClient(engine) {
         logging(LogLevel.HEADERS) {}
