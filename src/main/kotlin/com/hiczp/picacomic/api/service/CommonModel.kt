@@ -4,13 +4,15 @@ package com.hiczp.picacomic.api.service
 
 import com.google.gson.annotations.SerializedName
 import com.hiczp.caeruleum.annotation.EncodeName
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlin.coroutines.coroutineContext
 
 internal typealias DeferredPages<T> = List<Deferred<Page<T>>>
 
-internal suspend fun <T> DeferredPages<T>.awaitElements() =
-    awaitAll().flatMap { it.docs }
+internal suspend fun <T> DeferredPages<T>.awaitElements() = awaitAll().flatMap { it.docs }
 
 @Suppress("MemberVisibilityCanBePrivate")
 data class Page<T>(
@@ -32,17 +34,19 @@ data class Page<T>(
 
     companion object {
         suspend fun <T> travelAllAsync(pageProvider: suspend (page: Int) -> Page<T>): DeferredPages<T> {
-            val firstPage = pageProvider(1)
-            val list = mutableListOf<Deferred<Page<T>>>(CompletableDeferred(firstPage))
-            if (!firstPage.isLast) {
-                val coroutineScope = CoroutineScope(coroutineContext)
-                (2..firstPage.pages).map {
-                    coroutineScope.async { pageProvider(it) }
-                }.also {
-                    list.addAll(it)
+            val coroutineScope = CoroutineScope(coroutineContext)
+            val firstPageDeferred = coroutineScope.async { pageProvider(1) }
+            val firstPage = firstPageDeferred.await()
+            return if (firstPage.isLast) {
+                listOf(firstPageDeferred)
+            } else {
+                ArrayList<Deferred<Page<T>>>(firstPage.pages).apply {
+                    add(firstPageDeferred)
+                    (2..firstPage.pages).forEach {
+                        add(coroutineScope.async { pageProvider(it) })
+                    }
                 }
             }
-            return list
         }
 
         suspend fun <T> travelAll(pageProvider: suspend (page: Int) -> Page<T>) =
