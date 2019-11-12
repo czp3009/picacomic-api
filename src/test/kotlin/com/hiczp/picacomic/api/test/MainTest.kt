@@ -1,9 +1,6 @@
 package com.hiczp.picacomic.api.test
 
-import com.github.salomonbrys.kotson.bool
-import com.github.salomonbrys.kotson.int
-import com.github.salomonbrys.kotson.obj
-import com.github.salomonbrys.kotson.string
+import com.github.salomonbrys.kotson.*
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.hiczp.picacomic.api.PicaComicClient
@@ -12,21 +9,27 @@ import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.auth.model.RegisterRequest
 import com.hiczp.picacomic.api.service.user.model.Gender
 import io.ktor.client.engine.apache.Apache
+import io.ktor.client.features.logging.LogLevel
+import io.ktor.util.KtorExperimentalAPI
+import io.ktor.util.cio.writeChannel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.io.jvm.javaio.copyTo
+import kotlinx.coroutines.io.copyAndClose
 import kotlinx.coroutines.io.readRemaining
 import kotlinx.io.core.readBytes
 import org.apache.http.HttpHost
 import org.junit.jupiter.api.*
 import java.io.FileNotFoundException
 import java.nio.file.Path
+import kotlin.coroutines.coroutineContext
 
 private fun Any.println() = println(this)
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MainTest {
     private lateinit var config: JsonObject
+    private lateinit var picaComicClientBuilder: (LogLevel) -> PicaComicClient<*>
     private lateinit var picaComicClient: PicaComicClient<*>
 
     @BeforeAll
@@ -35,19 +38,25 @@ class MainTest {
             JsonParser.parseReader(it.reader())
         }?.obj ?: throw FileNotFoundException("Rename '_config.json' to 'config.json' before start test")
 
-        picaComicClient = PicaComicClient(Apache) {
-            engine {
-                //set proxy
-                if (config["useProxy"].bool) {
-                    customizeClient {
-                        setProxy(HttpHost(config["httpProxyHost"].string, config["httpProxyPort"].int))
+        picaComicClientBuilder = { logLevel ->
+            PicaComicClient(Apache, logLevel) {
+                engine {
+                    //set proxy
+                    if (config["useProxy"].bool) {
+                        customizeClient {
+                            setProxy(HttpHost(config["httpProxyHost"].string, config["httpProxyPort"].int))
+                        }
                     }
+                    connectTimeout = 100_000
+                    socketTimeout = 100_000
+                }
+            }.apply {
+                config["token"].nullString?.takeIf { it.isNotEmpty() }?.also {
+                    token = it
                 }
             }
         }
-        config["token"]?.string?.takeIf { it.isNotEmpty() }?.also {
-            picaComicClient.token = it
-        }
+        picaComicClient = picaComicClientBuilder(LogLevel.ALL)
     }
 
     @Test
@@ -240,66 +249,78 @@ class MainTest {
 
     //this test will take long time
     @Disabled
-    @UseExperimental(ExperimentalCoroutinesApi::class)
+    @UseExperimental(ObsoleteCoroutinesApi::class, KtorExperimentalAPI::class)
     @Test
     fun downloadTest() {
+        val picaComicClient = picaComicClientBuilder(LogLevel.NONE)
+
+        fun Path.deleteBeforeMkdirs() = this.also {
+            val file = toFile()
+            if (file.exists()) {
+                file.deleteRecursively()
+            }
+            file.mkdirs()
+        }
+
         runBlocking {
-            val requestPerSecond = 20L
-            val rateLimiter = produce {
-                while (true) {
-                    send(Unit)
-                    delay(1_000 / requestPerSecond)
-                }
-            }
-
-            suspend fun <T> (suspend () -> T).withRetry(): T {
-                var result: Result<T>
-                while (true) {
-                    rateLimiter.receive()
-                    result = runCatching { this() }
-                    if (result.isSuccess) break
-                }
-                return result.getOrNull()!!
-            }
-
             //big comic
-            val comicId = "5da89d903510b43fb6c548d4"
+            //val comicId = "5da89d903510b43fb6c548d4"
             //small comic
-            //val comicId = "5c0bca4e5a84c7393ef6030e"
+            val comicId = "5c0bca4e5a84c7393ef6030e"
 
+            val rateLimiter = rateLimiter(20)
             val titleDeferred = async { picaComicClient.comic.getDetail(comicId).data.title }
-            val episodesDeferred = async { picaComicClient.comic.getAllEpisodes(comicId) }
-            val comicPath = Path.of("./download", titleDeferred.await()).also { path ->
-                val file = path.toFile()
-                if (file.exists()) {
-                    file.delete()
+            val deferredEpisodes = picaComicClient.comic.getAllEpisodesAsync(comicId)
+            val comicPath = Path.of("./download", titleDeferred.await()).deleteBeforeMkdirs()
+
+            open class Message
+            data class Init(val title: String, val total: Int) : Message()
+            data class Increase(val title: String) : Message()
+
+            val counter = actor<Message> {
+                val total = HashMap<String, Int>()
+                val data = mutableMapOf<String, Int>()
+                for (message in channel) {
+                    if (message is Init) {
+                        total[message.title] = message.total
+                        data[message.title] = 0
+                    } else if (message is Increase) {
+                        data[message.title] = data[message.title]!! + 1
+                    }
+                    data.forEach { (title, count) ->
+                        val totalCount = total[title]!!
+                        println("$title <${"=".repeat(count)}${" ".repeat(totalCount - count)}> $count/$totalCount")
+                    }
+                    kotlin.io.println()
                 }
-                file.mkdirs()
             }
-            val log = StringBuffer()
-            episodesDeferred.await().map { episode ->
-                val order = episode.order!!
-                val episodePath = comicPath.resolve(order.toString()).also { it.toFile().mkdir() }
+
+            deferredEpisodes.map {
                 async {
-                    suspend { picaComicClient.comic.getAllPages(comicId, order) }
-                        .withRetry()
-                        .map { it.media }
-                        .map {
-                            async {
-                                val imageFile = episodePath.resolve(it.originalName).toFile()
-                                println("Start download ${it.originalName} in Episode $episode")
-                                suspend { picaComicClient.downloadFile(it).copyTo(imageFile.outputStream()) }
-                                    .withRetry()
-                                println("${it.originalName} in Episode $episode downloaded")
+                    it.await().docs.forEach { episode ->
+                        val title = episode.title
+                        val order = episode.order!!
+                        val episodePath = comicPath.resolve(title).deleteBeforeMkdirs()
+                        picaComicClient.comic.getAllPagesAsync(comicId, order).forEach {
+                            launch {
+                                val comicPage = it.await()
+                                counter.send(Init(title, comicPage.total))
+                                comicPage.docs.map { it.media }.forEach {
+                                    val imageFile = episodePath.resolve(it.originalName).toFile()
+                                    picaComicClient.downloadFile(it).copyAndClose(imageFile.writeChannel())
+                                    counter.send(Increase(title))
+                                }
                             }
-                        }.also {
-                            log.appendln("Episode $episode finished")
                         }
+                    }
                 }
-            }.awaitAll().forEach { it.awaitAll() }
-            println(log)
+            }.awaitAll()
+
+            counter.close()
             rateLimiter.cancel()
         }
+
+        picaComicClient.close()
     }
 
     @AfterAll
@@ -307,3 +328,12 @@ class MainTest {
         picaComicClient.close()
     }
 }
+
+@UseExperimental(ExperimentalCoroutinesApi::class)
+private suspend fun rateLimiter(requestPerSecond: Long) =
+    CoroutineScope(coroutineContext).produce {
+        while (true) {
+            send(Unit)
+            delay(1_000 / requestPerSecond)
+        }
+    }

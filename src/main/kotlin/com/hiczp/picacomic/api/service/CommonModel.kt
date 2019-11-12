@@ -1,11 +1,18 @@
+@file:Suppress("unused")
+
 package com.hiczp.picacomic.api.service
 
 import com.google.gson.annotations.SerializedName
 import com.hiczp.caeruleum.annotation.EncodeName
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
+import kotlin.coroutines.coroutineContext
 
+internal typealias DeferredPages<T> = List<Deferred<Page<T>>>
+
+internal suspend fun <T> DeferredPages<T>.awaitElements() =
+    awaitAll().flatMap { it.docs }
+
+@Suppress("MemberVisibilityCanBePrivate")
 data class Page<T>(
     val limit: Int,
     val page: Int,
@@ -24,18 +31,22 @@ data class Page<T>(
     val nextPage get() = if (isLast) pages else page + 1
 
     companion object {
-        suspend fun <T> travelAll(pageProvider: suspend (page: Int) -> Page<T>): List<T> {
+        suspend fun <T> travelAllAsync(pageProvider: suspend (page: Int) -> Page<T>): DeferredPages<T> {
             val firstPage = pageProvider(1)
-            return if (firstPage.isLast) {
-                firstPage.docs
-            } else {
-                coroutineScope {
-                    (2..firstPage.pages).map {
-                        async { pageProvider(it).docs }
-                    }
-                }.awaitAll().asSequence().mapTo(mutableListOf(firstPage.docs)) { it }.flatten()
+            val list = mutableListOf<Deferred<Page<T>>>(CompletableDeferred(firstPage))
+            if (!firstPage.isLast) {
+                val coroutineScope = CoroutineScope(coroutineContext)
+                (2..firstPage.pages).map {
+                    coroutineScope.async { pageProvider(it) }
+                }.also {
+                    list.addAll(it)
+                }
             }
+            return list
         }
+
+        suspend fun <T> travelAll(pageProvider: suspend (page: Int) -> Page<T>) =
+            travelAllAsync(pageProvider).awaitElements()
     }
 }
 
@@ -98,7 +109,7 @@ enum class RedirectType {
 }
 
 //常用分类
-@Suppress("NonAsciiCharacters")
+@Suppress("NonAsciiCharacters", "EnumEntryName", "SpellCheckingInspection")
 enum class PredefinedCategory {
     嗶咔漢化,
     全彩,

@@ -42,12 +42,13 @@ private const val picaAPI = "https://picaapi.picacomic.com"
 @Suppress("MemberVisibilityCanBePrivate")
 class PicaComicClient<out T : HttpClientEngineConfig>(
     engine: HttpClientEngineFactory<T>,
+    logLevel: LogLevel? = null,
     config: HttpClientConfig<T>.() -> Unit = {}
 ) : Closeable {
     var token: String? = null
 
     private val httpClient = HttpClient(engine) {
-        logging {}
+        logging(logLevel ?: LogLevel.ALL) {}
         defaultRequest {
             if (attributes.containsByKey(noSignAttribute)) return@defaultRequest
             val time = Instant.now().epochSecond
@@ -140,7 +141,7 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
     }
 
     private val downloader = HttpClient(engine) {
-        logging(LogLevel.HEADERS) {}
+        logging(logLevel ?: LogLevel.HEADERS) {}
         config()
     }
 

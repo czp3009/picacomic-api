@@ -4,6 +4,7 @@ import com.hiczp.caeruleum.annotation.*
 import com.hiczp.picacomic.api.service.Page
 import com.hiczp.picacomic.api.service.Response
 import com.hiczp.picacomic.api.service.SortType
+import com.hiczp.picacomic.api.service.awaitElements
 import com.hiczp.picacomic.api.service.comic.model.*
 import com.hiczp.picacomic.api.service.comment.model.CommentsResponse
 import com.hiczp.picacomic.api.utils.JSON_UTF8
@@ -60,8 +61,11 @@ interface ComicService {
         @Query page: Int = 1
     ): Response<Page<Episode>>
 
+    suspend fun getAllEpisodesAsync(comicId: String) =
+        Page.travelAllAsync { getEpisodes(comicId, it).data }
+
     suspend fun getAllEpisodes(comicId: String) =
-        Page.travelAll { getEpisodes(comicId, it).data }
+        getAllEpisodesAsync(comicId).awaitElements()
 
     @Get("{comicId}/comments")
     suspend fun getComments(
@@ -69,8 +73,11 @@ interface ComicService {
         @Query page: Int = 1
     ): Response<CommentsResponse>
 
+    suspend fun getAllCommentsAsync(comicId: String) =
+        Page.travelAllAsync { getComments(comicId, it).data.comments }
+
     suspend fun getAllComments(comicId: String) =
-        Page.travelAll { getComments(comicId, it).data.comments }
+        getAllCommentsAsync(comicId).awaitElements()
 
     /**
      * 哔咔留言版 其实是一个漫画下面的评论区
@@ -90,8 +97,11 @@ interface ComicService {
         @Query page: Int = 1
     ): Response<ComicPagesResponse>
 
+    suspend fun getAllPagesAsync(comicId: String, order: Int) =
+        Page.travelAllAsync { getPages(comicId, order, it).data.pages }
+
     suspend fun getAllPages(comicId: String, order: Int) =
-        Page.travelAll { getPages(comicId, order, it).data.pages }
+        getAllPagesAsync(comicId, order).awaitElements()
 
     /**
      * 喜欢某漫画, 再次调用则不喜欢
