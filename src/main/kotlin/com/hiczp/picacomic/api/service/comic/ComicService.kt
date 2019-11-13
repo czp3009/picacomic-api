@@ -86,6 +86,15 @@ interface ComicService {
         getComments("5822a6e3ad7ede654696e482", page)
 
     /**
+     * 发送评论
+     */
+    @Post("{comicId}/comments")
+    suspend fun sendComment(@Path comicId: String, @Body commentRequest: CommentRequest): Response<SendCommentResponse>
+
+    suspend fun sendComment(comicId: String, content: String) =
+        sendComment(comicId, CommentRequest(content))
+
+    /**
      * 得到漫画本体(每个图像的路径)
      *
      * @param order 第几话, 来自 Episode.order
@@ -114,4 +123,7 @@ interface ComicService {
      */
     @Post("{comicId}/favourite")
     suspend fun favourite(@Path comicId: String): Response<String>
+
+    @Get("{comicId}/recommendation")
+    suspend fun getRecommendation(@Path comicId: String): Response<List<Comic>>
 }

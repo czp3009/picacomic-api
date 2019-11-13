@@ -51,6 +51,14 @@ class MainTest {
                     socketTimeout = 100_000
                 }
             }.apply {
+                val tokenInConfigFile = config["token"].nullString?.takeIf { it.isNotEmpty() }
+                if (tokenInConfigFile != null) {
+                    token = tokenInConfigFile
+                } else {
+                    runBlocking {
+                        signIn(config["email"].string, config["password"].string).println()
+                    }
+                }
                 config["token"].nullString?.takeIf { it.isNotEmpty() }?.also {
                     token = it
                 }
@@ -85,14 +93,6 @@ class MainTest {
                     Gender.BOT
                 )
             ).println()
-        }
-    }
-
-    @Disabled
-    @Test
-    fun signIn() {
-        runBlocking {
-            picaComicClient.signIn(config["email"].string, config["password"].string).println()
         }
     }
 
@@ -299,7 +299,7 @@ class MainTest {
                 async {
                     it.await().docs.forEach { episode ->
                         val title = episode.title
-                        val order = episode.order!!
+                        val order = episode.order
                         val episodePath = comicPath.resolve(title).deleteBeforeMkdirs()
                         picaComicClient.comic.getAllPagesAsync(comicId, order).forEach {
                             launch {
@@ -321,6 +321,21 @@ class MainTest {
         }
 
         picaComicClient.close()
+    }
+
+    @Test
+    fun recommendation() {
+        runBlocking {
+            picaComicClient.comic.getRecommendation("5c0bca4e5a84c7393ef6030e").println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun sendComment() {
+        runBlocking {
+            picaComicClient.comic.sendComment("5c0bca4e5a84c7393ef6030e", "2333").println()
+        }
     }
 
     @AfterAll

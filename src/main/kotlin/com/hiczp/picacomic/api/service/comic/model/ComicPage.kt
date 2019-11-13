@@ -1,13 +1,14 @@
 package com.hiczp.picacomic.api.service.comic.model
 
 import com.google.gson.annotations.SerializedName
+import com.hiczp.picacomic.api.service.IdAndTitle
 import com.hiczp.picacomic.api.service.Page
 import com.hiczp.picacomic.api.service.Thumbnail
 
 data class ComicPagesResponse(
     val pages: Page<ComicPage>,
     @field:SerializedName("ep")
-    val episode: Episode
+    val episode: IdAndTitle
 )
 
 data class ComicPage(

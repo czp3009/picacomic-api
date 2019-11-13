@@ -4,6 +4,7 @@ package com.hiczp.picacomic.api.service
 
 import com.google.gson.annotations.SerializedName
 import com.hiczp.caeruleum.annotation.EncodeName
+import com.hiczp.picacomic.api.service.user.model.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -73,6 +74,12 @@ data class IdAndTitle(
     @field:SerializedName("_id")
     val id: String,
     val title: String
+)
+
+data class ContentAndUser(
+    val content: String,
+    @field:SerializedName("_user")
+    val user: User
 )
 
 enum class SortType {

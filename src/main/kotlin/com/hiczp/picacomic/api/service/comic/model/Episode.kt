@@ -6,9 +6,9 @@ data class Episode(
     @field:SerializedName("_id")
     val episodeId: String,
     val title: String,
-    val order: Int?,
+    val order: Int,
     @field:SerializedName("updated_at")
-    val updatedAt: String?,
+    val updatedAt: String,
     val id: String?,
     val selected: Boolean?,
     val status: Int?
