@@ -1,9 +1,9 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.3.50'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.60'
 }
 
 def ktorVersion = '1.2.5'
-def slf4jVersion = '1.7.28'
+def slf4jVersion = '1.7.29'
 
 group 'com.hiczp'
 version '0.0.1'
@@ -40,7 +40,7 @@ dependencies {
 //log
 dependencies {
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+    api group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
 }
 
 //test

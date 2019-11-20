@@ -271,6 +271,7 @@ class MainTest {
             httpClientProxyConfig()
         }
 
+        @Suppress("SpellCheckingInspection")
         fun Path.deleteBeforeMkdirs() = this.also {
             val file = toFile()
             if (file.exists()) {
