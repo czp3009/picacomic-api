@@ -8,13 +8,18 @@ import com.hiczp.picacomic.api.service.PredefinedCategory
 import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.auth.model.RegisterRequest
 import com.hiczp.picacomic.api.service.user.model.Gender
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.apache.Apache
+import io.ktor.client.engine.apache.ApacheEngineConfig
 import io.ktor.client.features.logging.LogLevel
+import io.ktor.client.request.get
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.cio.writeChannel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.copyAndClose
 import kotlinx.coroutines.io.readRemaining
 import kotlinx.io.core.readBytes
@@ -31,6 +36,19 @@ class MainTest {
     private lateinit var config: JsonObject
     private lateinit var picaComicClientBuilder: (LogLevel) -> PicaComicClient<*>
     private lateinit var picaComicClient: PicaComicClient<*>
+    private val httpEngine = Apache
+    private val httpClientProxyConfig: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
+        engine {
+            //set proxy
+            if (config["useProxy"].bool) {
+                customizeClient {
+                    setProxy(HttpHost(config["httpProxyHost"].string, config["httpProxyPort"].int))
+                }
+            }
+            connectTimeout = 100_000
+            socketTimeout = 100_000
+        }
+    }
 
     @BeforeAll
     fun init() {
@@ -39,17 +57,8 @@ class MainTest {
         }?.obj ?: throw FileNotFoundException("Rename '_config.json' to 'config.json' before start test")
 
         picaComicClientBuilder = { logLevel ->
-            PicaComicClient(Apache, logLevel) {
-                engine {
-                    //set proxy
-                    if (config["useProxy"].bool) {
-                        customizeClient {
-                            setProxy(HttpHost(config["httpProxyHost"].string, config["httpProxyPort"].int))
-                        }
-                    }
-                    connectTimeout = 100_000
-                    socketTimeout = 100_000
-                }
+            PicaComicClient(httpEngine, logLevel) {
+                httpClientProxyConfig()
             }.apply {
                 val tokenInConfigFile = config["token"].nullString?.takeIf { it.isNotEmpty() }
                 if (tokenInConfigFile != null) {
@@ -58,9 +67,6 @@ class MainTest {
                     runBlocking {
                         signIn(config["email"].string, config["password"].string).println()
                     }
-                }
-                config["token"].nullString?.takeIf { it.isNotEmpty() }?.also {
-                    token = it
                 }
             }
         }
@@ -158,9 +164,17 @@ class MainTest {
     @Test
     fun downloadFile() {
         runBlocking {
-            picaComicClient.downloadFile(
-                Thumbnail("https://storage1.picacomic.com", "艦隊收藏.jpg", "1ed52b9e-8ac3-47ae-bafc-c31bfab9b3d5.jpg")
-            ).readRemaining().readBytes().contentToString().println()
+            HttpClient(httpEngine) {
+                httpClientProxyConfig()
+            }.use {
+                it.get<ByteReadChannel>(
+                    Thumbnail(
+                        "https://storage1.picacomic.com",
+                        "艦隊收藏.jpg",
+                        "1ed52b9e-8ac3-47ae-bafc-c31bfab9b3d5.jpg"
+                    ).urlString
+                ).readRemaining().readBytes().contentToString().println()
+            }
         }
     }
 
@@ -253,6 +267,9 @@ class MainTest {
     @Test
     fun downloadTest() {
         val picaComicClient = picaComicClientBuilder(LogLevel.NONE)
+        val downloader = HttpClient(httpEngine) {
+            httpClientProxyConfig()
+        }
 
         fun Path.deleteBeforeMkdirs() = this.also {
             val file = toFile()
@@ -307,7 +324,7 @@ class MainTest {
                                 counter.send(Init(title, comicPage.total))
                                 comicPage.docs.map { it.media }.forEach {
                                     val imageFile = episodePath.resolve(it.originalName).toFile()
-                                    picaComicClient.downloadFile(it).copyAndClose(imageFile.writeChannel())
+                                    downloader.get<ByteReadChannel>(it.urlString).copyAndClose(imageFile.writeChannel())
                                     counter.send(Increase(title))
                                 }
                             }
@@ -321,6 +338,7 @@ class MainTest {
         }
 
         picaComicClient.close()
+        downloader.close()
     }
 
     @Test

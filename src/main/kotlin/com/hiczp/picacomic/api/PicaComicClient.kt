@@ -5,7 +5,6 @@ import com.hiczp.caeruleum.create
 import com.hiczp.picacomic.api.feature.doBeforeSend
 import com.hiczp.picacomic.api.feature.logging
 import com.hiczp.picacomic.api.service.Response
-import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.auth.AuthService
 import com.hiczp.picacomic.api.service.category.CategoryService
 import com.hiczp.picacomic.api.service.comic.ComicService
@@ -25,11 +24,9 @@ import io.ktor.client.features.defaultRequest
 import io.ktor.client.features.json.GsonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.logging.LogLevel
-import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.http.userAgent
-import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.io.core.Closeable
 import java.time.Instant
 import kotlin.random.Random
@@ -140,17 +137,7 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
         !user.getProfile().unauthorized()
     }
 
-    private val downloader = HttpClient(engine) {
-        logging(logLevel ?: LogLevel.HEADERS) {}
-        config()
-    }
-
-    suspend fun downloadFile(urlString: String) = downloader.get<ByteReadChannel>(urlString)
-
-    suspend fun downloadFile(thumbnail: Thumbnail) = downloadFile(thumbnail.urlString)
-
     override fun close() {
         httpClient.close()
-        downloader.close()
     }
 }
