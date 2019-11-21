@@ -20,12 +20,14 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.engine.HttpClientEngineFactory
+import io.ktor.client.features.ClientRequestException
 import io.ktor.client.features.defaultRequest
 import io.ktor.client.features.json.GsonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.logging.LogLevel
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.userAgent
 import kotlinx.io.core.Closeable
 import java.time.Instant
@@ -134,7 +136,15 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
     suspend fun checkAuthorize() = if (token == null) {
         false
     } else {
-        !user.getProfile().unauthorized()
+        try {
+            !user.getProfile().unauthorized()
+        } catch (e: ClientRequestException) {
+            if (e.response.status == HttpStatusCode.Unauthorized) {
+                false
+            } else {
+                throw e
+            }
+        }
     }
 
     override fun close() {

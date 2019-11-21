@@ -25,7 +25,7 @@ import kotlinx.coroutines.io.readRemaining
 import kotlinx.io.core.readBytes
 import org.apache.http.HttpHost
 import org.junit.jupiter.api.*
-import java.io.FileNotFoundException
+import java.io.File
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
 
@@ -52,25 +52,30 @@ class MainTest {
 
     @BeforeAll
     fun init() {
-        config = MainTest::class.java.getResourceAsStream("/config.json")?.let {
-            JsonParser.parseReader(it.reader())
-        }?.obj ?: throw FileNotFoundException("Rename '_config.json' to 'config.json' before start test")
+        //not use resource for write usage
+        val configFile = File("src/test/resources/config.json")
+        require(configFile.exists()) { "Rename '_config.json' to 'config.json' before start test" }
+        config = JsonParser.parseString(configFile.readText()).obj
 
         picaComicClientBuilder = { logLevel ->
             PicaComicClient(httpEngine, logLevel) {
                 httpClientProxyConfig()
             }.apply {
-                val tokenInConfigFile = config["token"].nullString?.takeIf { it.isNotEmpty() }
-                if (tokenInConfigFile != null) {
-                    token = tokenInConfigFile
-                } else {
-                    runBlocking {
-                        signIn(config["email"].string, config["password"].string).println()
-                    }
+                config["token"].nullString?.let {
+                    token = it
+                } ?: runBlocking {
+                    signIn(config["email"].string, config["password"].string).println()
                 }
             }
         }
         picaComicClient = picaComicClientBuilder(LogLevel.ALL)
+        runBlocking {
+            if (config["token"].nullString != null && !picaComicClient.checkAuthorize()) {
+                picaComicClient.signIn(config["email"].string, config["password"].string)
+            }
+        }
+        config["token"] = picaComicClient.token
+        configFile.writeText(config.toString())
     }
 
     @Test
@@ -354,6 +359,35 @@ class MainTest {
     fun sendComment() {
         runBlocking {
             picaComicClient.comic.sendComment("5c0bca4e5a84c7393ef6030e", "2333").println()
+        }
+    }
+
+    @Test
+    fun getGames() {
+        runBlocking {
+            picaComicClient.game.getGames().println()
+        }
+    }
+
+    @Test
+    fun getGameDetail() {
+        runBlocking {
+            picaComicClient.game.getDetail("58296dee1cc00b5d50b1b5fe").println()
+        }
+    }
+
+    @Test
+    fun getGameComments() {
+        runBlocking {
+            picaComicClient.game.getComments("58296dee1cc00b5d50b1b5fe").println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun likeGame() {
+        runBlocking {
+            picaComicClient.game.like("58296dee1cc00b5d50b1b5fe").println()
         }
     }
 
