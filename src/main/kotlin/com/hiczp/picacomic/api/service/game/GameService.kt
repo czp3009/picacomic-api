@@ -8,7 +8,9 @@ import com.hiczp.picacomic.api.service.comic.model.SendCommentResponse
 import com.hiczp.picacomic.api.service.comment.model.CommentsResponse
 import com.hiczp.picacomic.api.service.game.model.Game
 import com.hiczp.picacomic.api.service.game.model.GameDetail
+import com.hiczp.picacomic.api.utils.JSON_UTF8
 
+@DefaultContentType(JSON_UTF8)
 interface GameService {
     @Get("/games")
     suspend fun getGames(@Query page: Int = 1): Response<Page<Game>>

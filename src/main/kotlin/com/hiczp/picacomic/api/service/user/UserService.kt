@@ -4,11 +4,9 @@ import com.hiczp.caeruleum.annotation.*
 import com.hiczp.picacomic.api.service.Page
 import com.hiczp.picacomic.api.service.Response
 import com.hiczp.picacomic.api.service.SortType
+import com.hiczp.picacomic.api.service.Thumbnail
 import com.hiczp.picacomic.api.service.comic.model.Comic
-import com.hiczp.picacomic.api.service.user.model.Notification
-import com.hiczp.picacomic.api.service.user.model.ProfileComment
-import com.hiczp.picacomic.api.service.user.model.PunchInResponse
-import com.hiczp.picacomic.api.service.user.model.User
+import com.hiczp.picacomic.api.service.user.model.*
 import com.hiczp.picacomic.api.utils.JSON_UTF8
 
 @DefaultContentType(JSON_UTF8)
@@ -36,4 +34,43 @@ interface UserService {
 
     @Post("punch-in")
     suspend fun punchIn(): Response<PunchInResponse>
+
+    @Put("avatar")
+    suspend fun updateAvatar(@Body updateAvatarRequest: UpdateAvatarRequest): Response<Thumbnail>
+
+    suspend fun updateAvatar(avatar: String) =
+        updateAvatar(UpdateAvatarRequest(avatar))
+
+    @Put("password")
+    suspend fun updatePassword(@Body updatePasswordRequest: UpdatePasswordRequest): Response<*>
+
+    suspend fun updatePassword(oldPassword: String, newPassword: String) =
+        updatePassword(UpdatePasswordRequest(oldPassword, newPassword))
+
+    @Put("update-id")
+    suspend fun updateId(@Body updatePicaIdRequest: UpdatePicaIdRequest): Response<*>
+
+    suspend fun updateId(email: String, name: String) =
+        updateId(UpdatePicaIdRequest(email, name))
+
+    @Put("profile")
+    suspend fun updateProfile(@Body updateProfileRequest: UpdateProfileRequest): Response<*>
+
+    suspend fun updateProfile(slogan: String) =
+        updateProfile(UpdateProfileRequest(slogan))
+
+    @Put("update-qa")
+    suspend fun updateQuestionAndAnswer(@Body updateQuestionAndAnswerRequest: UpdateQuestionAndAnswerRequest): Response<*>
+
+    /**
+     * 总是返回 400, 不明确使用方式
+     */
+    @Put("{userId}/title")
+    suspend fun updateTitle(
+        @Path userId: String,
+        @Body updateUserTitleRequest: UpdateUserTitleRequest
+    ): Response<*>
+
+    suspend fun updateTitle(userId: String, title: String) =
+        updateTitle(userId, UpdateUserTitleRequest(title))
 }

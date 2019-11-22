@@ -70,6 +70,10 @@ data class Thumbnail(
         }
 }
 
+data class UserIdRequest(
+    val userId: String
+)
+
 data class IdAndTitle(
     @field:SerializedName("_id")
     val id: String,

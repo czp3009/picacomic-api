@@ -13,7 +13,7 @@ import com.hiczp.picacomic.api.utils.JSON_UTF8
 interface AuthService {
     @Attribute(NO_AUTH)
     @Post("register")
-    suspend fun register(@Body registerRequest: RegisterRequest): Response<Unit>
+    suspend fun register(@Body registerRequest: RegisterRequest): Response<*>
 
     @Attribute(NO_AUTH)
     @Post("sign-in")

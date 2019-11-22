@@ -124,7 +124,7 @@ class MainTest {
     @Test
     fun getOthersProfile() {
         runBlocking {
-            picaComicClient.user.getProfile("5bd0256ea5860d7c1aa49d4b").println()
+            picaComicClient.user.getProfile("5dc41ad9a490ea064cfd2ad7").println()
         }
     }
 
@@ -132,7 +132,7 @@ class MainTest {
     @Test
     fun dirty() {
         runBlocking {
-            picaComicClient.user.dirty("5bd0256ea5860d7c1aa49d4b").println()
+            picaComicClient.user.dirty("5dc41ad9a490ea064cfd2ad7").println()
         }
     }
 
@@ -388,6 +388,22 @@ class MainTest {
     fun likeGame() {
         runBlocking {
             picaComicClient.game.like("58296dee1cc00b5d50b1b5fe").println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun blockUser() {
+        runBlocking {
+            picaComicClient.util.blockUser("123456").println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun updateTitle() {
+        runBlocking {
+            picaComicClient.user.updateTitle("5dc41ad9a490ea064cfd2ad7", "HelloWorld!").println()
         }
     }
 
