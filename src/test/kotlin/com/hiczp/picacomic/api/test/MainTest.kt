@@ -78,10 +78,18 @@ class MainTest {
         configFile.writeText(config.toString())
     }
 
+    @Suppress("SpellCheckingInspection")
     @Test
-    fun initTest() {
+    fun wakaInit() {
         runBlocking {
-            picaComicClient.init.init().println()
+            picaComicClient.init.wakaInit().println()
+        }
+    }
+
+    @Test
+    fun platformInit() {
+        runBlocking {
+            picaComicClient.init.platformInit().println()
         }
     }
 
@@ -404,6 +412,20 @@ class MainTest {
     fun updateTitle() {
         runBlocking {
             picaComicClient.user.updateTitle("5dc41ad9a490ea064cfd2ad7", "HelloWorld!").println()
+        }
+    }
+
+    @Test
+    fun leaderBoardComic() {
+        runBlocking {
+            picaComicClient.comic.getLeaderBoard().println()
+        }
+    }
+
+    @Test
+    fun leaderBoardKnight() {
+        runBlocking {
+            picaComicClient.comic.getKnightLeaderBoard().println()
         }
     }
 

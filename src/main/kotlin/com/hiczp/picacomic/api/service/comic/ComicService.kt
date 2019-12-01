@@ -126,4 +126,22 @@ interface ComicService {
 
     @Get("{comicId}/recommendation")
     suspend fun getRecommendation(@Path comicId: String): Response<List<Comic>>
+
+    /**
+     * 哔咔排行榜 -> 最热门
+     *
+     * @param tt TimeType, 例如 H24, D7, D30
+     * @param ct 不明确, 例如 VC
+     */
+    @Get("leaderboard")
+    suspend fun getLeaderBoard(
+        @Query("tt") tt: String = "H24",
+        @Query("ct") ct: String = "VC"
+    ): Response<List<LeaderBoardComic>>
+
+    /**
+     * 哔咔排行榜 -> 骑士榜
+     */
+    @Get("knight-leaderboard")
+    suspend fun getKnightLeaderBoard(): Response<List<LeaderBoardKnight>>
 }

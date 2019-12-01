@@ -13,7 +13,7 @@ data class Notification(
     val title: String,
     val cover: Thumbnail,
     val content: String,
-    val redirectType: RedirectType,
+    val redirectType: RedirectType?,
     /**
      * 对应具体类型的 ID, 例如 comicId, commentId, 由 redirectType 赋予含义
      */

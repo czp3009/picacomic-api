@@ -33,7 +33,7 @@ import kotlinx.io.core.Closeable
 import java.time.Instant
 import kotlin.random.Random
 
-private const val picaAPI = "https://picaapi.picacomic.com"
+internal const val picaAPIBaseUrl = "https://picaapi.picacomic.com"
 
 /**
  * 如果密钥不正确(未来的更新), 所有 API 将始终返回 success 且无 data 字段
@@ -52,18 +52,15 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
             if (attributes.containsByKey(noSignAttribute)) return@defaultRequest
             val time = Instant.now().epochSecond
             val nonce = Random.nextString(('0'..'9') + ('a'..'f'), 32)
+            val path = url.buildString().substringAfter("$picaAPIBaseUrl/")
+            val raw = "$path$time$nonce${method.value}${PicaComicInherent.apiKey}".toLowerCase()
+            val signature = hmacSHA256(PicaComicInherent.hmacSha256Key, raw).convertToString()
             with(PicaComicInherent) {
                 header("api-key", apiKey)
                 header("app-channel", appChannel)
                 header("time", time)
                 header("nonce", nonce)
-                header(
-                    "signature",
-                    hmacSHA256(
-                        hmacSha256Key,
-                        "${url.buildString().substringAfter("$picaAPI/")}$time$nonce${method.value}$apiKey".toLowerCase()
-                    ).convertToString()
-                )
+                header("signature", signature)
                 header("app-version", appVersion)
                 header("app-uuid", appUUID)
                 header("image-quality", imageQuality)
@@ -118,15 +115,15 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
     }
 
     val init by lazy { httpClient.create<InitService>() }
-    val auth by lazy { httpClient.create<AuthService>("$picaAPI/auth/") }
-    val category by lazy { httpClient.create<CategoryService>("$picaAPI/categories") }
-    val comic by lazy { httpClient.create<ComicService>("$picaAPI/comics/") }
-    val comment by lazy { httpClient.create<CommentService>("$picaAPI/comments/") }
-    val episode by lazy { httpClient.create<EpisodeService>("$picaAPI/eps/") }
-    val game by lazy { httpClient.create<GameService>("$picaAPI/games/") }
-    val keyword by lazy { httpClient.create<KeywordService>("$picaAPI/keywords") }
-    val user by lazy { httpClient.create<UserService>("$picaAPI/users/") }
-    val util by lazy { httpClient.create<UtilService>("$picaAPI/utils/") }
+    val auth by lazy { httpClient.create<AuthService>("$picaAPIBaseUrl/auth/") }
+    val category by lazy { httpClient.create<CategoryService>("$picaAPIBaseUrl/categories") }
+    val comic by lazy { httpClient.create<ComicService>("$picaAPIBaseUrl/comics/") }
+    val comment by lazy { httpClient.create<CommentService>("$picaAPIBaseUrl/comments/") }
+    val episode by lazy { httpClient.create<EpisodeService>("$picaAPIBaseUrl/eps/") }
+    val game by lazy { httpClient.create<GameService>("$picaAPIBaseUrl/games/") }
+    val keyword by lazy { httpClient.create<KeywordService>("$picaAPIBaseUrl/keywords") }
+    val user by lazy { httpClient.create<UserService>("$picaAPIBaseUrl/users/") }
+    val util by lazy { httpClient.create<UtilService>("$picaAPIBaseUrl/utils/") }
 
     suspend fun signIn(email: String, password: String) =
         auth.signIn(email, password).also {

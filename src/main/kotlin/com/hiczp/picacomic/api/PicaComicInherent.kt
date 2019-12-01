@@ -10,7 +10,7 @@ object PicaComicInherent {
     var accept = "application/vnd.picacomic.com.v1+json"
     //分流
     var appChannel = 2
-    var appVersion = "2.2.1.2.3.3"
+    var appVersion = "2.2.1.3.3.4"
     var appUUID = "defaultUuid"
     var imageQuality = "original"
     var appPlatform = "android"

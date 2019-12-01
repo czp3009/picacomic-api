@@ -1,14 +1,20 @@
 package com.hiczp.picacomic.api.service.init
 
 import com.hiczp.caeruleum.annotation.Attribute
-import com.hiczp.caeruleum.annotation.BaseUrl
 import com.hiczp.caeruleum.annotation.Get
+import com.hiczp.caeruleum.annotation.Query
 import com.hiczp.picacomic.api.NO_SIGN
+import com.hiczp.picacomic.api.picaAPIBaseUrl
+import com.hiczp.picacomic.api.service.Response
+import com.hiczp.picacomic.api.service.init.model.InitResponse
 import com.hiczp.picacomic.api.service.init.model.WakaInitResponse
 
-@BaseUrl("http://68.183.234.72/")
 interface InitService {
+    @Suppress("SpellCheckingInspection")
     @Attribute(NO_SIGN)
-    @Get("init")
-    suspend fun init(): WakaInitResponse
+    @Get("http://68.183.234.72/init")
+    suspend fun wakaInit(): WakaInitResponse
+
+    @Get("$picaAPIBaseUrl/init")
+    suspend fun platformInit(@Query platform: String = "android"): Response<InitResponse>
 }
