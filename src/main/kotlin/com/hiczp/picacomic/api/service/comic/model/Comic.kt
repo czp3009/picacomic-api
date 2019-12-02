@@ -16,6 +16,9 @@ data class Comic(
     val thumb: Thumbnail,
     val id: String?,
     val likesCount: Int,
+    /**
+     * "看了这个本子的人也在看" 中不包括以下两个字段
+     */
     val totalViews: Int?,
     val totalLikes: Int?
 )

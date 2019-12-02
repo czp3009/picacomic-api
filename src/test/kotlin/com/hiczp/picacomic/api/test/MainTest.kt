@@ -429,6 +429,13 @@ class MainTest {
         }
     }
 
+    @Test
+    fun random() {
+        runBlocking {
+            picaComicClient.comic.random().println()
+        }
+    }
+
     @AfterAll
     fun dispose() {
         picaComicClient.close()

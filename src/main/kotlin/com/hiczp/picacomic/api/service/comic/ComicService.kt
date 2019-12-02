@@ -144,4 +144,7 @@ interface ComicService {
      */
     @Get("knight-leaderboard")
     suspend fun getKnightLeaderBoard(): Response<List<LeaderBoardKnight>>
+
+    @Get("random")
+    suspend fun random(): Response<List<Comic>>
 }
