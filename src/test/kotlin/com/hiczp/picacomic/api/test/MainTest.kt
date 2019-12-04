@@ -436,6 +436,13 @@ class MainTest {
         }
     }
 
+    @Test
+    fun banner() {
+        runBlocking {
+            picaComicClient.banner.get().println()
+        }
+    }
+
     @AfterAll
     fun dispose() {
         picaComicClient.close()

@@ -6,6 +6,7 @@ import com.hiczp.picacomic.api.feature.doBeforeSend
 import com.hiczp.picacomic.api.feature.logging
 import com.hiczp.picacomic.api.service.Response
 import com.hiczp.picacomic.api.service.auth.AuthService
+import com.hiczp.picacomic.api.service.banner.BannerService
 import com.hiczp.picacomic.api.service.category.CategoryService
 import com.hiczp.picacomic.api.service.comic.ComicService
 import com.hiczp.picacomic.api.service.comment.CommentService
@@ -116,6 +117,7 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
 
     val init by lazy { httpClient.create<InitService>() }
     val auth by lazy { httpClient.create<AuthService>("$picaAPIBaseUrl/auth/") }
+    val banner by lazy { httpClient.create<BannerService>("$picaAPIBaseUrl/banners") }
     val category by lazy { httpClient.create<CategoryService>("$picaAPIBaseUrl/categories") }
     val comic by lazy { httpClient.create<ComicService>("$picaAPIBaseUrl/comics/") }
     val comment by lazy { httpClient.create<CommentService>("$picaAPIBaseUrl/comments/") }

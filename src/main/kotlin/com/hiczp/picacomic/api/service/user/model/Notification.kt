@@ -1,7 +1,6 @@
 package com.hiczp.picacomic.api.service.user.model
 
 import com.google.gson.annotations.SerializedName
-import com.hiczp.picacomic.api.service.RedirectType
 import com.hiczp.picacomic.api.service.Thumbnail
 
 data class Notification(
@@ -13,7 +12,7 @@ data class Notification(
     val title: String,
     val cover: Thumbnail,
     val content: String,
-    val redirectType: RedirectType?,
+    val redirectType: String?,
     /**
      * 对应具体类型的 ID, 例如 comicId, commentId, 由 redirectType 赋予含义
      */
