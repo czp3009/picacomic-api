@@ -120,7 +120,10 @@ enum class RedirectType {
     APP,
     @EncodeName("web")
     @SerializedName("web")
-    WEB
+    WEB,
+    @EncodeName("ads")
+    @SerializedName("ads")
+    ADVERT
 }
 
 //常用分类

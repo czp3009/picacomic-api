@@ -8,12 +8,14 @@ import com.hiczp.picacomic.api.service.Response
 import com.hiczp.picacomic.api.service.auth.AuthService
 import com.hiczp.picacomic.api.service.banner.BannerService
 import com.hiczp.picacomic.api.service.category.CategoryService
+import com.hiczp.picacomic.api.service.chat.ChatService
 import com.hiczp.picacomic.api.service.comic.ComicService
 import com.hiczp.picacomic.api.service.comment.CommentService
 import com.hiczp.picacomic.api.service.episode.EpisodeService
 import com.hiczp.picacomic.api.service.game.GameService
 import com.hiczp.picacomic.api.service.init.InitService
 import com.hiczp.picacomic.api.service.keyword.KeywordService
+import com.hiczp.picacomic.api.service.picaapp.PicaAppService
 import com.hiczp.picacomic.api.service.user.UserService
 import com.hiczp.picacomic.api.service.util.UtilService
 import com.hiczp.picacomic.api.utils.*
@@ -119,11 +121,13 @@ class PicaComicClient<out T : HttpClientEngineConfig>(
     val auth by lazy { httpClient.create<AuthService>("$picaAPIBaseUrl/auth/") }
     val banner by lazy { httpClient.create<BannerService>("$picaAPIBaseUrl/banners") }
     val category by lazy { httpClient.create<CategoryService>("$picaAPIBaseUrl/categories") }
+    val chat by lazy { httpClient.create<ChatService>("$picaAPIBaseUrl/chat") }
     val comic by lazy { httpClient.create<ComicService>("$picaAPIBaseUrl/comics/") }
     val comment by lazy { httpClient.create<CommentService>("$picaAPIBaseUrl/comments/") }
     val episode by lazy { httpClient.create<EpisodeService>("$picaAPIBaseUrl/eps/") }
     val game by lazy { httpClient.create<GameService>("$picaAPIBaseUrl/games/") }
     val keyword by lazy { httpClient.create<KeywordService>("$picaAPIBaseUrl/keywords") }
+    val picaApp by lazy { httpClient.create<PicaAppService>("$picaAPIBaseUrl/pica-apps") }
     val user by lazy { httpClient.create<UserService>("$picaAPIBaseUrl/users/") }
     val util by lazy { httpClient.create<UtilService>("$picaAPIBaseUrl/utils/") }
 

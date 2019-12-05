@@ -443,6 +443,27 @@ class MainTest {
         }
     }
 
+    @Test
+    fun chat() {
+        runBlocking {
+            picaComicClient.chat.getChatRooms().println()
+        }
+    }
+
+    @Test
+    fun picaApp() {
+        runBlocking {
+            picaComicClient.picaApp.get().println()
+        }
+    }
+
+    @Test
+    fun getHistoryApplications() {
+        runBlocking {
+            picaComicClient.init.getApplications().println()
+        }
+    }
+
     @AfterAll
     fun dispose() {
         picaComicClient.close()
