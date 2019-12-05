@@ -6,6 +6,7 @@ import com.hiczp.picacomic.api.service.Response
 import com.hiczp.picacomic.api.service.SortType
 import com.hiczp.picacomic.api.service.awaitElements
 import com.hiczp.picacomic.api.service.comic.model.*
+import com.hiczp.picacomic.api.service.comment.model.CommentRequest
 import com.hiczp.picacomic.api.service.comment.model.CommentsResponse
 import com.hiczp.picacomic.api.utils.JSON_UTF8
 

@@ -3,8 +3,8 @@ package com.hiczp.picacomic.api.service.game
 import com.hiczp.caeruleum.annotation.*
 import com.hiczp.picacomic.api.service.Page
 import com.hiczp.picacomic.api.service.Response
-import com.hiczp.picacomic.api.service.comic.model.CommentRequest
 import com.hiczp.picacomic.api.service.comic.model.SendCommentResponse
+import com.hiczp.picacomic.api.service.comment.model.CommentRequest
 import com.hiczp.picacomic.api.service.comment.model.CommentsResponse
 import com.hiczp.picacomic.api.service.game.model.Game
 import com.hiczp.picacomic.api.service.game.model.GameDetail

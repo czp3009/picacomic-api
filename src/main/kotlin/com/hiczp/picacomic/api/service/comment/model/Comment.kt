@@ -20,6 +20,10 @@ data class Comment(
     val hide: Boolean,
     @field:SerializedName("created_at")
     val createdAt: String,
+    /**
+     * 置顶评论有此字段
+     */
+    val ip: String?,
     val id: String?,
     val likesCount: Int,
     val commentsCount: Int,

@@ -464,6 +464,21 @@ class MainTest {
         }
     }
 
+    @Test
+    fun announcements() {
+        runBlocking {
+            picaComicClient.announcement.get().println()
+        }
+    }
+
+    @Disabled
+    @Test
+    fun top() {
+        runBlocking {
+            picaComicClient.comment.top("5dca35977b6d432d4c1a5928").println()
+        }
+    }
+
     @AfterAll
     fun dispose() {
         picaComicClient.close()

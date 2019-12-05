@@ -11,10 +11,14 @@ data class SendCommentResponse(
     val commentId: String,
     val comment: ContentAndUser,
     @field:SerializedName("_comic")
-    val comicId: String,
+    val comicId: String?,
+    @field:SerializedName("_game")
+    val gameId: String?,
     @field:SerializedName("_parent")
-    val parentId: String,
-    val childsCount: Int,
+    val parentId: String?,
+    @Suppress("SpellCheckingInspection")
+    @field:SerializedName("childsCount")
+    val childCount: Int,
     val likesCount: Int,
     @field:SerializedName("created_at")
     val createdAt: String

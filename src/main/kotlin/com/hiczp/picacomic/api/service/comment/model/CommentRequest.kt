@@ -1,4 +1,4 @@
-package com.hiczp.picacomic.api.service.comic.model
+package com.hiczp.picacomic.api.service.comment.model
 
 data class CommentRequest(
     val content: String
