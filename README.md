@@ -4,7 +4,7 @@ Call `picacomic` API in Kotlin.
 # Usage
 Gradle
 ```groovy
-//TODO
+compile group: 'com.hiczp', name: 'picacomic-api', version: '0.0.1'
 ```
 
 Recommend HttpEngine is CIO, see all available engines below
