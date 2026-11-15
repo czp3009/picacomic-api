@@ -1,0 +1,13 @@
+project_doc_fallback_filenames = ["CLAUDE.md"]
+
+[features]
+hooks = true
+
+[[hooks.PostToolUse]]
+matcher = "^(Edit|Write|MultiEdit|NotebookEdit|Bash)$|(^|\\.)apply_patch$"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "python3 .codex/hooks/post-tool-call.py"
+timeout = 5
+statusMessage = "Notify IDEA"
